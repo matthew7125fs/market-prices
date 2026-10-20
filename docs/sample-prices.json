@@ -1,0 +1,79 @@
+{
+  "updated": "2026-10-20T14:30:00Z",
+  "sample": true,
+  "source": "USDA AMS Livestock, Poultry & Grain Market News",
+  "groups": [
+    {
+      "title": "Hogs & Pigs",
+      "items": [
+        {
+          "id": "hogs",
+          "label": "Market hogs",
+          "detail": "National negotiated, carcass basis",
+          "price": 67.42,
+          "prev": 67.27,
+          "unit": "cwt",
+          "report_date": "2026-10-19",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/3458"
+        },
+        {
+          "id": "feeder_pigs_40",
+          "label": "Feeder pigs, 40 lb",
+          "detail": "National direct, delivered",
+          "price": 43.10,
+          "prev": 44.90,
+          "unit": "head",
+          "weight_lb": 40,
+          "report_date": "2026-10-16",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/2810"
+        },
+        {
+          "id": "feeder_pigs_ew",
+          "label": "Early weaned pigs, 10-12 lb",
+          "detail": "National direct, cash and formula",
+          "price": 23.62,
+          "prev": 24.81,
+          "unit": "head",
+          "weight_lb": 11,
+          "report_date": "2026-10-16",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/2810"
+        }
+      ]
+    },
+    {
+      "title": "Cattle",
+      "items": [
+        {
+          "id": "fed_steers_live",
+          "label": "Fed steers, live",
+          "detail": "5-area weekly weighted average",
+          "price": 224.19,
+          "prev": null,
+          "unit": "cwt",
+          "report_date": "2026-10-18",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/2477"
+        },
+        {
+          "id": "fed_steers_dressed",
+          "label": "Fed steers, dressed",
+          "detail": "5-area weekly weighted average",
+          "price": 352.52,
+          "prev": null,
+          "unit": "cwt",
+          "report_date": "2026-10-18",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/2477"
+        },
+        {
+          "id": "feeder_steers",
+          "label": "Feeder steers, 500-600 lb",
+          "detail": "Placeholder until the USDA data is connected",
+          "price": 400.00,
+          "prev": null,
+          "unit": "cwt",
+          "report_date": "2026-10-16",
+          "report_url": "https://mymarketnews.ams.usda.gov/viewReport/3233"
+        }
+      ]
+    }
+  ]
+}

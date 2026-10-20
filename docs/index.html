@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livestock Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fs-red: #cd0e13;
+    --ink: #231f20;
+    --muted: #6b6566;
+    --line: #ebebeb;
+    --card: #ffffff;
+    --soft: #f8f8f8;
+    --up: #1e7b34;
+    --down: #cd0e13;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; }
+  body {
+    font-family: Archivo, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.35;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--fs-red);
+    border-radius: 6px;
+    padding: 18px 20px 14px;
+    max-width: 560px;
+  }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: .01em; }
+  .unit-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+  .unit-toggle button {
+    font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border: 0; background: transparent;
+    color: var(--muted); cursor: pointer;
+  }
+  .unit-toggle button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  h2 {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--fs-red); margin: 16px 0 4px;
+  }
+  .row {
+    display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid var(--line);
+  }
+  .group:last-of-type .row:last-child { border-bottom: 0; }
+  .label { font-weight: 600; }
+  .detail { color: var(--muted); font-size: 12.5px; }
+  .price { text-align: right; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .price small { font-weight: 500; font-size: 12px; color: var(--muted); }
+  .meta { text-align: right; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .chg.up { color: var(--up); }
+  .chg.down { color: var(--down); }
+  footer { margin-top: 12px; font-size: 11.5px; color: var(--muted); }
+  footer a { color: inherit; }
+  .notice { background: #fde9e8; color: #770407; font-size: 12px; padding: 6px 10px; border-radius: 4px; margin-top: 10px; }
+  .loading { color: var(--muted); padding: 16px 0; }
+  @media (max-width: 380px) {
+    .card { padding: 14px 14px 12px; }
+    .price { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<section class="card" aria-labelledby="mp-title">
+  <header>
+    <h1 id="mp-title">Livestock Markets</h1>
+    <div class="unit-toggle" role="group" aria-label="Price unit">
+      <button type="button" data-unit="quoted" aria-pressed="true">As quoted</button>
+      <button type="button" data-unit="lb" aria-pressed="false">Per lb</button>
+    </div>
+  </header>
+  <div id="mp-body"><p class="loading">Loading prices&hellip;</p></div>
+  <footer id="mp-footer"></footer>
+</section>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var dataUrl = params.get("data") || "prices.json";
+  var unitMode = "quoted";
+  try { unitMode = localStorage.getItem("mp-unit") || "quoted"; } catch (e) {}
+  var data = null;
+
+  var money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  var money3 = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso.length === 10 ? iso + "T12:00:00" : iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function perLb(item, value) {
+    if (item.unit === "cwt") return value / 100;
+    if (item.unit === "head" && item.weight_lb) return value / item.weight_lb;
+    return null;
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function renderRow(item) {
+    var row = el("div", "row");
+    var left = el("div");
+    left.appendChild(el("div", "label", item.label));
+    if (item.detail) left.appendChild(el("div", "detail", item.detail));
+
+    var price = el("div", "price");
+    var lb = perLb(item, item.price);
+    if (unitMode === "lb" && lb != null) {
+      price.textContent = (item.unit === "head" ? "≈ " : "") + money.format(lb);
+      price.appendChild(el("small", null, " /lb"));
+    } else {
+      price.textContent = money.format(item.price);
+      price.appendChild(el("small", null, " /" + item.unit));
+    }
+
+    var meta = el("div", "meta");
+    if (item.prev != null) {
+      var diff = item.price - item.prev;
+      var shown = unitMode === "lb" && lb != null ? perLb(item, diff) : diff;
+      var chg = el("span", "chg " + (diff > 0 ? "up" : diff < 0 ? "down" : ""));
+      var fmt = unitMode === "lb" && lb != null ? money3 : money;
+      chg.textContent = (diff > 0 ? "▲ " : diff < 0 ? "▼ " : "") + fmt.format(Math.abs(shown));
+      meta.appendChild(chg);
+      meta.appendChild(document.createTextNode(" · "));
+    }
+    var link = el("a", null, fmtDate(item.report_date));
+    link.href = item.report_url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.style.color = "inherit";
+    meta.appendChild(link);
+
+    row.appendChild(left);
+    row.appendChild(price);
+    row.appendChild(el("div"));
+    row.appendChild(meta);
+    return row;
+  }
+
+  function render() {
+    var body = document.getElementById("mp-body");
+    body.textContent = "";
+    data.groups.forEach(function (g) {
+      if (!g.items || !g.items.length) return;
+      var group = el("div", "group");
+      group.appendChild(el("h2", null, g.title));
+      g.items.forEach(function (item) { group.appendChild(renderRow(item)); });
+      body.appendChild(group);
+    });
+    if (data.sample) body.appendChild(el("div", "notice", "Preview with sample data, not live prices."));
+
+    var footer = document.getElementById("mp-footer");
+    footer.textContent = "";
+    footer.appendChild(document.createTextNode("Source: "));
+    var src = el("a", null, "USDA AMS Market News");
+    src.href = "https://mymarketnews.ams.usda.gov/";
+    src.target = "_blank";
+    src.rel = "noopener";
+    footer.appendChild(src);
+    footer.appendChild(document.createTextNode(
+      ". Regional and national averages, not Gateway FS bids. Per-lb pig prices are estimates from the quoted weight."));
+
+    document.querySelectorAll(".unit-toggle button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.unit === unitMode));
+    });
+  }
+
+  document.querySelectorAll(".unit-toggle button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      unitMode = b.dataset.unit;
+      try { localStorage.setItem("mp-unit", unitMode); } catch (e) {}
+      if (data) render();
+    });
+  });
+
+  fetch(dataUrl, { cache: "no-cache" })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (d) { data = d; render(); })
+    .catch(function () {
+      document.getElementById("mp-body").innerHTML =
+        '<p class="loading">Market prices are unavailable right now.</p>';
+    });
+})();
+</script>
+</body>
+</html>
